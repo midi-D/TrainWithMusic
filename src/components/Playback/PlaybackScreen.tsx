@@ -32,10 +32,14 @@ export function PlaybackScreen({ list, onExit }: Props) {
     onExit()
   }
 
-  const track = status.trackIndex < list.tracks.length ? list.tracks[status.trackIndex] : null
-
   const isCompleted = status.state === 'completed'
   const isResting = status.state === 'resting'
+
+  const track = status.trackIndex < list.tracks.length ? list.tracks[status.trackIndex] : null
+  const nextTrack = list.tracks[status.trackIndex + 1]
+  const nextLabel = nextTrack
+    ? `Next: ${nextTrack.exerciseTitle || nextTrack.fileName}`
+    : 'Next: Almost done!'
 
   return (
     <div className="fixed inset-0 bg-gray-950 flex flex-col items-center justify-center select-none">
@@ -80,11 +84,9 @@ export function PlaybackScreen({ list, onExit }: Props) {
                 remainingSecs={status.remainingSecs}
                 playDuration={status.playDuration}
               />
-              {track && (
-                <div className="text-gray-500 text-xl mt-4">
-                  Next: {track.exerciseTitle || track.fileName}
-                </div>
-              )}
+              <div className="text-gray-400 text-xl mt-4">
+                {nextLabel}
+              </div>
             </>
           ) : (
             <>
