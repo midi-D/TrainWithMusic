@@ -41,7 +41,7 @@ export function TrackRow({ track, index, total, onChange, onDelete, onMoveUp, on
         <input
           ref={fileInputRef}
           type="file"
-          accept="audio/*"
+          accept=".mp3,.m4a,.wav,.aac,.ogg,.flac,.mp4,audio/mpeg,audio/mp4,audio/wav,audio/ogg,audio/flac,audio/*"
           className="hidden"
           onChange={handleFileChange}
         />
