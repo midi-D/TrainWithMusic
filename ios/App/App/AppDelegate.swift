@@ -1,4 +1,5 @@
 import UIKit
+import WebKit
 import Capacitor
 import AVFoundation
 
@@ -8,49 +9,78 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Set audio session to playback so audio works even when silent switch is on
+        // Set audio session to playback with AirPlay + Bluetooth A2DP support
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             print("Failed to set AVAudioSession category: \(error)")
         }
+
+        // Observe route changes (e.g. AirPlay selected) and interruptions
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(handleAudioRouteChange(_:)),
+            name: AVAudioSession.routeChangeNotification, object: nil)
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(handleAudioInterruption(_:)),
+            name: AVAudioSession.interruptionNotification, object: nil)
+
         return true
     }
 
-    func applicationWillResignActive(_ application: UIApplication) {
-        // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-        // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
+    // MARK: - Audio session recovery
+
+    @objc func handleAudioRouteChange(_ notification: Notification) {
+        try? AVAudioSession.sharedInstance().setActive(true)
+        resumeWebAudio()
     }
 
-    func applicationDidEnterBackground(_ application: UIApplication) {
-        // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-        // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+    @objc func handleAudioInterruption(_ notification: Notification) {
+        guard let info = notification.userInfo,
+              let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue),
+              type == .ended else { return }
+        try? AVAudioSession.sharedInstance().setActive(true)
+        resumeWebAudio()
     }
 
-    func applicationWillEnterForeground(_ application: UIApplication) {
-        // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+    /// Tells the WKWebView to resume its AudioContext after a route change or interruption.
+    func resumeWebAudio() {
+        DispatchQueue.main.async {
+            self.findWebView()?.evaluateJavaScript(
+                "window.__resumeAudioContext && window.__resumeAudioContext()",
+                completionHandler: nil
+            )
+        }
     }
 
-    func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    /// Walk the view hierarchy to find the WKWebView Capacitor uses.
+    func findWebView() -> WKWebView? {
+        guard let root = window?.rootViewController else { return nil }
+        return findWebView(in: root.view)
     }
 
-    func applicationWillTerminate(_ application: UIApplication) {
-        // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+    func findWebView(in view: UIView) -> WKWebView? {
+        if let wk = view as? WKWebView { return wk }
+        for sub in view.subviews {
+            if let found = findWebView(in: sub) { return found }
+        }
+        return nil
     }
+
+    // MARK: - App lifecycle
+
+    func applicationWillResignActive(_ application: UIApplication) {}
+    func applicationDidEnterBackground(_ application: UIApplication) {}
+    func applicationWillEnterForeground(_ application: UIApplication) {}
+    func applicationDidBecomeActive(_ application: UIApplication) {}
+    func applicationWillTerminate(_ application: UIApplication) {}
 
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-        // Called when the app was launched with a url. Feel free to add additional processing here,
-        // but if you want the App API to support tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
     }
 
     func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
-        // Called when the app was launched with an activity, including Universal Links.
-        // Feel free to add additional processing here, but if you want the App API to support
-        // tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
-
 }

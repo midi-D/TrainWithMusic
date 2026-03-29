@@ -2,8 +2,10 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import type { TrainingList } from '../types'
 import {
   resumeAudioContext,
+  getAudioContext,
   decodeAudioBlob,
   playAudioBuffer,
+  quickFadeOut,
   scheduleBeeps,
   stopNodes,
   playApplause,
@@ -24,6 +26,7 @@ export interface PlaybackStatus {
 }
 
 const BEEP_COUNT = 5
+const FADE_SECS = 1.0
 
 export function usePlayback() {
   const [status, setStatus] = useState<PlaybackStatus>({
@@ -39,15 +42,22 @@ export function usePlayback() {
   useEffect(() => { statusRef.current = status }, [status])
 
   const activeSource = useRef<AudioBufferSourceNode | null>(null)
+  const activeGainRef = useRef<GainNode | null>(null)
   const activeBeeps = useRef<Array<{ osc: OscillatorNode; gain: GainNode }>>([])
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const stoppedRef = useRef(false)
   const listRef = useRef<TrainingList | null>(null)
   const trackIndexRef = useRef(0)
 
-  // Cached decoded buffer so resume doesn't need to re-fetch IndexedDB
+  // Cached decoded buffer so resume/overlap doesn't need to re-fetch IndexedDB
   const cachedBufferRef = useRef<AudioBuffer | null>(null)
   const cachedFileIdRef = useRef<string | null>(null)
+
+  // Pending source: pre-scheduled during rest to fade in before track starts
+  const pendingSourceRef = useRef<AudioBufferSourceNode | null>(null)
+  const pendingGainRef = useRef<GainNode | null>(null)
+  const pendingFileIdRef = useRef<string | null>(null)
+  const pendingStartAtRef = useRef<number>(0) // AudioContext time the pending source was scheduled
 
   // Pause state
   const pausedElapsedRef = useRef(0)         // secs elapsed in track when paused
@@ -70,10 +80,24 @@ export function usePlayback() {
 
   const stopAll = useCallback(() => {
     clearTimer()
-    if (activeSource.current) {
-      try { activeSource.current.stop() } catch { /* already stopped */ }
-      activeSource.current = null
+
+    // Stop any pending pre-scheduled source (fade-in overlap during rest)
+    if (pendingSourceRef.current) {
+      if (pendingGainRef.current) quickFadeOut(pendingGainRef.current)
+      try { pendingSourceRef.current.stop(getAudioContext().currentTime + 0.05) } catch { /* ok */ }
+      pendingSourceRef.current = null
+      pendingGainRef.current = null
+      pendingFileIdRef.current = null
     }
+
+    // Stop active music source
+    if (activeSource.current) {
+      if (activeGainRef.current) quickFadeOut(activeGainRef.current)
+      try { activeSource.current.stop(getAudioContext().currentTime + 0.05) } catch { /* ok */ }
+      activeSource.current = null
+      activeGainRef.current = null
+    }
+
     stopNodes(activeBeeps.current)
     activeBeeps.current = []
   }, [clearTimer])
@@ -139,6 +163,56 @@ export function usePlayback() {
           setStatus((s) => ({ ...s, remainingSecs: Math.max(0, remaining) }))
         }
       }, 100)
+
+      // Pre-fetch and schedule next track to start FADE_SECS before rest ends
+      // (creates an audible fade-in overlap during the last second of rest)
+      if (list.restTimeSecs > FADE_SECS + 0.1 && nextTrackIndex < list.tracks.length) {
+        const nextTrack = list.tracks[nextTrackIndex]
+        const ctx = getAudioContext()
+        const fadeInStartAt = ctx.currentTime + list.restTimeSecs - FADE_SECS
+
+        ;(async () => {
+          if (!nextTrack || stoppedRef.current) return
+
+          let buf: AudioBuffer
+          if (cachedBufferRef.current && cachedFileIdRef.current === nextTrack.fileId) {
+            buf = cachedBufferRef.current
+          } else {
+            const fileRecord = await getAudioFile(nextTrack.fileId)
+            if (!fileRecord || stoppedRef.current) return
+            buf = await decodeAudioBlob(fileRecord.blob)
+            if (stoppedRef.current) return
+            cachedBufferRef.current = buf
+            cachedFileIdRef.current = nextTrack.fileId
+          }
+
+          if (stoppedRef.current) return
+
+          // Clamp start time to now in case decode took too long
+          const now = getAudioContext().currentTime
+          const startAt = Math.max(now + 0.01, fadeInStartAt)
+          const actualFadeIn = Math.max(0, fadeInStartAt + FADE_SECS - startAt)
+
+          // +FADE_SECS: source must cover the early-start overlap so it doesn't end prematurely
+          const { source, gain } = playAudioBuffer(
+            buf,
+            nextTrack.startOffset,
+            nextTrack.playDuration + FADE_SECS,
+            { startAt, fadeInSecs: actualFadeIn },
+          )
+
+          if (stoppedRef.current) {
+            quickFadeOut(gain)
+            try { source.stop(getAudioContext().currentTime + 0.05) } catch { /* ok */ }
+            return
+          }
+
+          pendingSourceRef.current = source
+          pendingGainRef.current = gain
+          pendingFileIdRef.current = nextTrack.fileId
+          pendingStartAtRef.current = startAt
+        })()
+      }
     },
     [clearTimer],
   )
@@ -155,23 +229,64 @@ export function usePlayback() {
 
       const track = list.tracks[index]
       trackIndexRef.current = index
-
-      // Use cached buffer when resuming the same file; otherwise decode fresh
-      let buffer: AudioBuffer
-      if (elapsedSecs > 0 && cachedBufferRef.current && cachedFileIdRef.current === track.fileId) {
-        buffer = cachedBufferRef.current
-      } else {
-        const fileRecord = await getAudioFile(track.fileId)
-        if (!fileRecord || stoppedRef.current) return
-        buffer = await decodeAudioBlob(fileRecord.blob)
-        if (stoppedRef.current) return
-        cachedBufferRef.current = buffer
-        cachedFileIdRef.current = track.fileId
-      }
-
       const duration = track.playDuration
-      const filePosition = track.startOffset + elapsedSecs
-      const remaining = Math.max(0.1, duration - elapsedSecs)
+
+      // Check if a pre-scheduled pending source is available for this track
+      const canAdoptPending =
+        elapsedSecs === 0 &&
+        pendingSourceRef.current !== null &&
+        pendingFileIdRef.current === track.fileId &&
+        cachedBufferRef.current !== null
+
+      let remaining: number
+
+      if (canAdoptPending) {
+        // Adopt the pre-started source (already fading in)
+        const pendingElapsed = Math.max(
+          0,
+          getAudioContext().currentTime - pendingStartAtRef.current,
+        )
+        remaining = Math.max(0.1, duration - pendingElapsed)
+
+        activeSource.current = pendingSourceRef.current!
+        activeGainRef.current = pendingGainRef.current!
+        pendingSourceRef.current = null
+        pendingGainRef.current = null
+        pendingFileIdRef.current = null
+
+        // Schedule fade-out on the existing gain node
+        if (remaining > FADE_SECS) {
+          const now = getAudioContext().currentTime
+          activeGainRef.current.gain.setValueAtTime(1, now + remaining - FADE_SECS)
+          activeGainRef.current.gain.linearRampToValueAtTime(0, now + remaining)
+        }
+      } else {
+        // Normal path: fetch/decode buffer, then start with fades
+        let buffer: AudioBuffer
+        if (elapsedSecs > 0 && cachedBufferRef.current && cachedFileIdRef.current === track.fileId) {
+          buffer = cachedBufferRef.current
+        } else {
+          const fileRecord = await getAudioFile(track.fileId)
+          if (!fileRecord || stoppedRef.current) return
+          buffer = await decodeAudioBlob(fileRecord.blob)
+          if (stoppedRef.current) return
+          cachedBufferRef.current = buffer
+          cachedFileIdRef.current = track.fileId
+        }
+
+        const filePosition = track.startOffset + elapsedSecs
+        remaining = Math.max(0.1, duration - elapsedSecs)
+
+        const fadeIn = elapsedSecs === 0 ? Math.min(FADE_SECS, remaining / 2) : 0
+        const fadeOut = remaining > FADE_SECS ? FADE_SECS : 0
+
+        const { source, gain } = playAudioBuffer(buffer, filePosition, remaining, {
+          fadeInSecs: fadeIn,
+          fadeOutSecs: fadeOut,
+        })
+        activeSource.current = source
+        activeGainRef.current = gain
+      }
 
       setStatus({
         state: 'playing',
@@ -181,14 +296,14 @@ export function usePlayback() {
         playDuration: duration,
       })
 
-      const source = playAudioBuffer(buffer, filePosition, remaining)
-      activeSource.current = source
-
-      // Only schedule end beeps that haven't fired yet
+      // Schedule end beeps that haven't fired yet
       if (list.useBeeps) {
+        const effectiveElapsed = canAdoptPending
+          ? Math.max(0, getAudioContext().currentTime - pendingStartAtRef.current) // re-read after adopt
+          : elapsedSecs
         const endOffsets: number[] = []
         for (let i = 0; i < BEEP_COUNT; i++) {
-          const offsetFromNow = duration - BEEP_COUNT + i - elapsedSecs
+          const offsetFromNow = duration - BEEP_COUNT + i - effectiveElapsed
           if (offsetFromNow >= 0 && offsetFromNow < remaining) endOffsets.push(offsetFromNow)
         }
         if (endOffsets.length > 0) {
@@ -320,7 +435,6 @@ export function usePlayback() {
 
     const inRest = state === 'resting' || state === 'preparing' ||
       (state === 'paused' && pausedInRestRef.current)
-    // Next rest is before track: (current rest's next track) + 1, or (current track) + 1
     const nextIdx = inRest
       ? nextRestTrackIndexRef.current + 1
       : trackIndexRef.current + 1
@@ -348,8 +462,6 @@ export function usePlayback() {
 
     const inRest = state === 'resting' || state === 'preparing' ||
       (state === 'paused' && pausedInRestRef.current)
-    // When in rest: go to rest before previous track (min 0 = preparing)
-    // When playing: go to rest before same track
     const targetIdx = inRest
       ? Math.max(0, nextRestTrackIndexRef.current - 1)
       : trackIndexRef.current

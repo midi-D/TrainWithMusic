@@ -7,6 +7,7 @@ interface Props {
   onEdit: (id: string) => void
   onPlay: (id: string) => void
   onDelete: (id: string) => void
+  onAbout: () => void
 }
 
 function formatDate(iso: string): string {
@@ -19,14 +20,20 @@ function formatDate(iso: string): string {
   }
 }
 
-export function MainScreen({ lists, loading, onNew, onEdit, onPlay, onDelete }: Props) {
+export function MainScreen({ lists, loading, onNew, onEdit, onPlay, onDelete, onAbout }: Props) {
   return (
     <div className="h-dvh flex flex-col bg-gray-950">
       {/* Header */}
       <div className="safe-top bg-gray-900 border-b border-gray-800 px-4 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-white text-xl font-bold">TrainWithMusic</h1>
-          <p className="text-gray-500 text-xs mt-0.5">Your training lists</p>
+          <button
+            onClick={onAbout}
+            className="text-left active:opacity-70 transition"
+            aria-label="About TrainWithMusic"
+          >
+            <h1 className="text-white text-xl font-bold">TrainWithMusic</h1>
+            <p className="text-gray-500 text-xs mt-0.5">Your training lists</p>
+          </button>
         </div>
         <button
           onClick={onNew}

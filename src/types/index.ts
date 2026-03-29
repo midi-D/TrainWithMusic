@@ -18,5 +18,6 @@ export interface TrainingList {
 
 export type Screen =
   | { type: 'main' }
+  | { type: 'about' }
   | { type: 'editor'; listId: string | null }
   | { type: 'playback'; listId: string }
