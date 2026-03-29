@@ -69,6 +69,19 @@ export function usePlayback() {
         return
       }
 
+      // Schedule countdown beeps at end of rest so the 5th beep fires as music starts
+      if (list.useBeeps) {
+        const restDuration = list.restTimeSecs
+        const beepOffsets: number[] = []
+        for (let i = 0; i < BEEP_COUNT; i++) {
+          const offset = restDuration - (BEEP_COUNT - 1 - i) // N-4, N-3, N-2, N-1, N
+          if (offset >= 0) beepOffsets.push(offset)
+        }
+        if (beepOffsets.length > 0) {
+          activeBeeps.current = [...activeBeeps.current, ...scheduleBeeps(beepOffsets)]
+        }
+      }
+
       let remaining = list.restTimeSecs
       setStatus((s) => ({ ...s, state: 'resting', remainingSecs: remaining, playDuration: list.restTimeSecs }))
 
@@ -117,18 +130,16 @@ export function usePlayback() {
       const source = playAudioBuffer(buffer, track.startOffset, duration)
       activeSource.current = source
 
-      // Schedule beeps if enabled
+      // Schedule end-of-track beeps (last 5 seconds of music)
       if (list.useBeeps) {
-        const startOffsets: number[] = []
         const endOffsets: number[] = []
-
         for (let i = 0; i < BEEP_COUNT; i++) {
-          if (i < duration) startOffsets.push(i)
           const endOffset = duration - BEEP_COUNT + i
-          if (endOffset > BEEP_COUNT && endOffset < duration) endOffsets.push(endOffset)
+          if (endOffset >= 0 && endOffset < duration) endOffsets.push(endOffset)
         }
-
-        activeBeeps.current = scheduleBeeps([...startOffsets, ...endOffsets])
+        if (endOffsets.length > 0) {
+          activeBeeps.current = scheduleBeeps(endOffsets)
+        }
       }
 
       // Countdown timer
