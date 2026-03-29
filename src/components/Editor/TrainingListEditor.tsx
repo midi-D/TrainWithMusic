@@ -26,6 +26,7 @@ export function TrainingListEditor({ initial, onSave, onSaveAs, onCancel }: Prop
   const [list, setList] = useState<TrainingList>({ ...initial, tracks: [...initial.tracks] })
   const [saveAsName, setSaveAsName] = useState('')
   const [showSaveAs, setShowSaveAs] = useState(false)
+  const [restStr, setRestStr] = useState(String(initial.restTimeSecs))
 
   const updateTrack = (index: number, track: Track) => {
     setList((l) => {
@@ -90,11 +91,19 @@ export function TrainingListEditor({ initial, onSave, onSaveAs, onCancel }: Prop
           <label className="flex-1 flex flex-col gap-1">
             <span className="text-xs text-gray-400 uppercase tracking-wider">Rest time (sec)</span>
             <input
-              type="number"
-              min={0}
-              step={1}
-              value={list.restTimeSecs}
-              onChange={(e) => setList((l) => ({ ...l, restTimeSecs: Math.max(0, Number(e.target.value)) }))}
+              type="text"
+              inputMode="numeric"
+              value={restStr}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, '')
+                setRestStr(digits)
+                if (digits !== '') setList((l) => ({ ...l, restTimeSecs: Math.max(0, Number(digits)) }))
+              }}
+              onBlur={() => {
+                const val = Math.max(0, Number(restStr) || 0)
+                setRestStr(String(val))
+                setList((l) => ({ ...l, restTimeSecs: val }))
+              }}
               className="w-full bg-gray-800 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </label>

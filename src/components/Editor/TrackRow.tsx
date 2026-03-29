@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import type { Track } from '../../types'
 import { saveAudioFile } from '../../utils/db'
 
@@ -15,14 +15,41 @@ interface Props {
 export function TrackRow({ track, index, total, onChange, onDelete, onMoveUp, onMoveDown }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Local string state so the user can delete all digits without the field snapping back
+  const [startStr, setStartStr] = useState(String(track.startOffset))
+  const [durationStr, setDurationStr] = useState(String(track.playDuration))
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     const fileId = `audio_${Date.now()}_${Math.random().toString(36).slice(2)}`
     await saveAudioFile(fileId, file.name, file)
     onChange({ ...track, fileId, fileName: file.name })
-    // reset input so same file can be re-selected
     e.target.value = ''
+  }
+
+  const handleStartChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, '')
+    setStartStr(digits)
+    if (digits !== '') onChange({ ...track, startOffset: Math.max(0, Number(digits)) })
+  }
+
+  const handleStartBlur = () => {
+    const val = Math.max(0, Number(startStr) || 0)
+    setStartStr(String(val))
+    onChange({ ...track, startOffset: val })
+  }
+
+  const handleDurationChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, '')
+    setDurationStr(digits)
+    if (digits !== '') onChange({ ...track, playDuration: Math.max(1, Number(digits)) })
+  }
+
+  const handleDurationBlur = () => {
+    const val = Math.max(1, Number(durationStr) || 1)
+    setDurationStr(String(val))
+    onChange({ ...track, playDuration: val })
   }
 
   return (
@@ -82,22 +109,22 @@ export function TrackRow({ track, index, total, onChange, onDelete, onMoveUp, on
         <label className="flex-1 flex flex-col gap-0.5">
           <span className="text-xs text-gray-500">Start (sec)</span>
           <input
-            type="number"
-            min={0}
-            step={1}
-            value={track.startOffset}
-            onChange={(e) => onChange({ ...track, startOffset: Math.max(0, Number(e.target.value)) })}
+            type="text"
+            inputMode="numeric"
+            value={startStr}
+            onChange={(e) => handleStartChange(e.target.value)}
+            onBlur={handleStartBlur}
             className="w-full bg-gray-700 rounded px-3 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </label>
         <label className="flex-1 flex flex-col gap-0.5">
           <span className="text-xs text-gray-500">Play for (sec)</span>
           <input
-            type="number"
-            min={1}
-            step={1}
-            value={track.playDuration}
-            onChange={(e) => onChange({ ...track, playDuration: Math.max(1, Number(e.target.value)) })}
+            type="text"
+            inputMode="numeric"
+            value={durationStr}
+            onChange={(e) => handleDurationChange(e.target.value)}
+            onBlur={handleDurationBlur}
             className="w-full bg-gray-700 rounded px-3 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </label>
