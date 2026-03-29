@@ -23,7 +23,7 @@ export function MainScreen({ lists, loading, onNew, onEdit, onPlay, onDelete }: 
   return (
     <div className="min-h-dvh flex flex-col bg-gray-950">
       {/* Header */}
-      <div className="bg-gray-900 border-b border-gray-800 px-4 py-4 flex items-center justify-between">
+      <div className="safe-top bg-gray-900 border-b border-gray-800 px-4 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-white text-xl font-bold">TrainWithMusic</h1>
           <p className="text-gray-500 text-xs mt-0.5">Your training lists</p>

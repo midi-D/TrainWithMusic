@@ -42,14 +42,18 @@ export function PlaybackScreen({ list, onExit }: Props) {
       {/* Stop button */}
       <button
         onClick={handleStop}
-        className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 text-gray-300 text-xl font-bold hover:bg-gray-700 active:scale-95 transition z-10"
+        className="absolute right-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 text-gray-300 text-xl font-bold hover:bg-gray-700 active:scale-95 transition z-10"
+        style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
         aria-label="Stop playback"
       >
         ✕
       </button>
 
       {/* Track counter */}
-      <div className="absolute top-4 left-4 text-gray-500 text-sm font-medium">
+      <div
+        className="absolute left-4 text-gray-500 text-sm font-medium"
+        style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
+      >
         {!isCompleted && (
           <>Track {status.trackIndex + 1} / {status.totalTracks}</>
         )}

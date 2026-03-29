@@ -61,7 +61,7 @@ export function TrainingListEditor({ initial, onSave, onSaveAs, onCancel }: Prop
   return (
     <div className="min-h-dvh flex flex-col bg-gray-950">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-800 px-4 py-3 flex items-center gap-3">
+      <div className="safe-top sticky top-0 z-10 bg-gray-900 border-b border-gray-800 px-4 py-3 flex items-center gap-3">
         <button
           onClick={onCancel}
           className="text-gray-400 hover:text-white text-xl font-bold leading-none w-8 h-8 flex items-center justify-center"
