@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { Track } from '../../types'
 import { saveAudioFile } from '../../utils/db'
+import { WaveformEditor } from './WaveformEditor'
 
 interface Props {
   track: Track
@@ -38,6 +39,12 @@ export function TrackRow({ track, index, total, onChange, onDelete, onMoveUp, on
     const val = Math.max(0, Number(startStr) || 0)
     setStartStr(String(val))
     onChange({ ...track, startOffset: val })
+  }
+
+  // Called by the waveform slider — keeps text input in sync too
+  const handleStartOffsetChange = (offset: number) => {
+    setStartStr(String(offset))
+    onChange({ ...track, startOffset: offset })
   }
 
   const handleDurationChange = (raw: string) => {
@@ -129,6 +136,16 @@ export function TrackRow({ track, index, total, onChange, onDelete, onMoveUp, on
           />
         </label>
       </div>
+
+      {/* Waveform + start-position slider + preview */}
+      {track.fileId && (
+        <WaveformEditor
+          fileId={track.fileId}
+          startOffset={track.startOffset}
+          playDuration={track.playDuration}
+          onStartOffsetChange={handleStartOffsetChange}
+        />
+      )}
     </div>
   )
 }
