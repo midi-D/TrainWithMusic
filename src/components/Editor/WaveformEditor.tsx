@@ -131,9 +131,8 @@ export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffse
 
     await resumeAudioContext()
     const ctx = getAudioContext()
-    const dur = audioBufRef.current.duration
-    const previewStart = dur < 10 ? 0 : Math.max(0, dur / 2 - 5)
-    const previewLen = Math.min(10, dur - previewStart)
+    const previewStart = startOffset
+    const previewLen = playDuration
 
     const source = ctx.createBufferSource()
     source.buffer = audioBufRef.current
@@ -145,7 +144,7 @@ export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffse
       previewSourceRef.current = null
       setIsPreviewing(false)
     }
-  }, [])
+  }, [startOffset, playDuration])
 
   // Stop preview when component unmounts
   useEffect(() => {
@@ -202,7 +201,7 @@ export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffse
                   : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
               }`}
             >
-              {isPreviewing ? '■ Stop' : '▶ Preview'}
+              {isPreviewing ? '■ Stop' : '▶ Preview selection'}
             </button>
           </div>
         </>
