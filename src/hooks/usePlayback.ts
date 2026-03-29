@@ -11,7 +11,7 @@ import {
 } from '../utils/audio'
 import { getAudioFile } from '../utils/db'
 
-export type PlaybackState = 'idle' | 'playing' | 'resting' | 'completed' | 'stopped'
+export type PlaybackState = 'idle' | 'preparing' | 'playing' | 'resting' | 'completed' | 'stopped'
 
 export interface PlaybackStatus {
   state: PlaybackState
@@ -150,7 +150,13 @@ export function usePlayback() {
           clearTimer()
           if (!stoppedRef.current) {
             stopAll()
-            startRest(list, index + 1, (nextIdx) => startTrack(list, nextIdx))
+            if (index + 1 >= list.tracks.length) {
+              // Last track finished — complete immediately, no trailing rest
+              setStatus((s) => ({ ...s, state: 'completed', remainingSecs: 0 }))
+              playApplause()
+            } else {
+              startRest(list, index + 1, (nextIdx) => startTrack(list, nextIdx))
+            }
           }
         } else {
           setStatus((s) => ({ ...s, remainingSecs: Math.max(0, remaining) }))
@@ -165,9 +171,44 @@ export function usePlayback() {
       stoppedRef.current = false
       listRef.current = list
       await resumeAudioContext()
-      await startTrack(list, 0)
+
+      if (list.restTimeSecs > 0) {
+        // Initial "Get Ready!" countdown before first track
+        if (list.useBeeps) {
+          const restDuration = list.restTimeSecs
+          const beepOffsets: number[] = []
+          for (let i = 0; i < BEEP_COUNT; i++) {
+            const offset = restDuration - (BEEP_COUNT - 1 - i)
+            if (offset >= 0) beepOffsets.push(offset)
+          }
+          if (beepOffsets.length > 0) {
+            activeBeeps.current = scheduleBeeps(beepOffsets)
+          }
+        }
+
+        let remaining = list.restTimeSecs
+        setStatus({
+          state: 'preparing',
+          trackIndex: 0,
+          totalTracks: list.tracks.length,
+          remainingSecs: remaining,
+          playDuration: list.restTimeSecs,
+        })
+
+        intervalRef.current = setInterval(() => {
+          remaining -= 0.1
+          if (remaining <= 0) {
+            clearTimer()
+            if (!stoppedRef.current) startTrack(list, 0)
+          } else {
+            setStatus((s) => ({ ...s, remainingSecs: Math.max(0, remaining) }))
+          }
+        }, 100)
+      } else {
+        await startTrack(list, 0)
+      }
     },
-    [startTrack],
+    [clearTimer, startTrack],
   )
 
   const stop = useCallback(() => {

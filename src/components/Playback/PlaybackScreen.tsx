@@ -33,6 +33,7 @@ export function PlaybackScreen({ list, onExit }: Props) {
   }
 
   const isCompleted = status.state === 'completed'
+  const isPreparing = status.state === 'preparing'
   const isResting = status.state === 'resting'
 
   const track = status.trackIndex < list.tracks.length ? list.tracks[status.trackIndex] : null
@@ -58,7 +59,7 @@ export function PlaybackScreen({ list, onExit }: Props) {
         className="absolute left-4 text-gray-500 text-sm font-medium"
         style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
       >
-        {!isCompleted && (
+        {!isCompleted && !isPreparing && (
           <>Track {status.trackIndex + 1} / {status.totalTracks}</>
         )}
       </div>
@@ -75,18 +76,25 @@ export function PlaybackScreen({ list, onExit }: Props) {
         </div>
       ) : (
         <div className="flex flex-col items-center gap-4 px-4 text-center">
-          {isResting ? (
+          {(isResting || isPreparing) ? (
             <>
               <div className="text-gray-400 text-2xl font-semibold uppercase tracking-widest mb-2">
-                Rest
+                {isPreparing ? 'Get Ready!' : 'Rest'}
               </div>
               <CountdownTimer
                 remainingSecs={status.remainingSecs}
                 playDuration={status.playDuration}
               />
-              <div className="text-gray-400 text-xl mt-4">
-                {nextLabel}
-              </div>
+              {isResting && (
+                <div className="text-gray-400 text-xl mt-4">
+                  {nextLabel}
+                </div>
+              )}
+              {isPreparing && track && (
+                <div className="text-gray-500 text-xl mt-4">
+                  {track.exerciseTitle || track.fileName}
+                </div>
+              )}
             </>
           ) : (
             <>
