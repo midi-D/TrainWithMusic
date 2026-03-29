@@ -16,7 +16,10 @@
       "Bash(/opt/homebrew/bin/npm install:*)",
       "Bash(git init:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(gh repo:*)",
+      "Bash(/Users/midi/claude/TrainWithMusic/.gitignore:*)",
+      "Bash(git rm:*)"
     ]
   }
 }

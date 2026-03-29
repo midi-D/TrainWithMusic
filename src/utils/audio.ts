@@ -82,7 +82,7 @@ let applauseBuffer: AudioBuffer | null = null
 
 export async function loadApplause(): Promise<void> {
   try {
-    const resp = await fetch('/applause.wav')
+    const resp = await fetch('./applause.wav')
     const arrayBuffer = await resp.arrayBuffer()
     const ctx = getAudioContext()
     applauseBuffer = await ctx.decodeAudioData(arrayBuffer)

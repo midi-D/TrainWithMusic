@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">TrainWithMusic</string>
+    <string name="title_activity_main">TrainWithMusic</string>
+    <string name="package_name">com.trainwithmusic.app</string>
+    <string name="custom_url_scheme">com.trainwithmusic.app</string>
+</resources>
