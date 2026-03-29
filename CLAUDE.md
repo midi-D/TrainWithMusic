@@ -134,6 +134,9 @@ All skips land on a **rest period** (not mid-track):
 - `font-size: max(16px, 1em)` on all inputs prevents iOS auto-zoom
 - All screens use `h-dvh` (not `min-h-dvh`) to prevent full-page scroll
 - AVAudioSession `.playback` in `AppDelegate.swift` routes audio through speaker
+- **`ViewController.swift`** exists in the Xcode project and sets `allowsAirPlayForMediaPlayback = true` on the WKWebViewConfiguration. The storyboard still uses `CAPBridgeViewController` as the root VC class (file must be added/kept in Xcode manually — not auto-discovered).
+- **AirPlay limitation (known):** Web Audio API (`AudioContext`) audio cannot route to AirPlay on iOS. The `WebContent` sandbox process cannot connect to `com.apple.audio.AudioComponentRegistrar` (NSXPCConnectionInvalid, Code=4099) which is required for network audio streaming. Bluetooth speakers work fine (local hardware output, no sandbox restriction). AirPlay would require switching to `<audio>` elements or an `AVPlayer`-based Capacitor plugin. Accepted as a known limitation.
+- **AudioContext recovery** is in place for other interruptions (Bluetooth route changes, phone calls): `AppDelegate` observes `AVAudioSession.routeChangeNotification` and `interruptionNotification`, reactivates the session, and calls `window.__resumeAudioContext()` via JS injection. `audio.ts` also auto-resumes on `ctx.onstatechange`.
 
 ## Android-Specific Notes
 - `androidScheme: 'https'` in `capacitor.config.ts`
