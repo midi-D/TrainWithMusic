@@ -10,6 +10,11 @@ body {
   min-height: 100dvh;
 }
 
+/* Prevent iOS Safari from auto-zooming when inputs are focused (zoom triggers at < 16px) */
+input, textarea, select {
+  font-size: max(16px, 1em);
+}
+
 .safe-top {
   padding-top: env(safe-area-inset-top, 0px);
 }

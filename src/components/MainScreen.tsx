@@ -21,7 +21,7 @@ function formatDate(iso: string): string {
 
 export function MainScreen({ lists, loading, onNew, onEdit, onPlay, onDelete }: Props) {
   return (
-    <div className="min-h-dvh flex flex-col bg-gray-950">
+    <div className="h-dvh flex flex-col bg-gray-950">
       {/* Header */}
       <div className="safe-top bg-gray-900 border-b border-gray-800 px-4 py-4 flex items-center justify-between">
         <div>

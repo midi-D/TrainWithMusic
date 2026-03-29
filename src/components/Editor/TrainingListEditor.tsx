@@ -60,7 +60,7 @@ export function TrainingListEditor({ initial, onSave, onSaveAs, onCancel }: Prop
   }
 
   return (
-    <div className="min-h-dvh flex flex-col bg-gray-950">
+    <div className="h-dvh flex flex-col bg-gray-950">
       {/* Header */}
       <div className="safe-top sticky top-0 z-10 bg-gray-900 border-b border-gray-800 px-4 py-3 flex items-center gap-3">
         <button
