@@ -81,10 +81,7 @@ export function PlaybackScreen({ list, onExit }: Props) {
               <div className="text-gray-400 text-2xl font-semibold uppercase tracking-widest mb-2">
                 {isPreparing ? 'Get Ready!' : 'Rest'}
               </div>
-              <CountdownTimer
-                remainingSecs={status.remainingSecs}
-                playDuration={status.playDuration}
-              />
+              <CountdownTimer remainingSecs={status.remainingSecs} isRest />
               {isResting && (
                 <div className="text-gray-400 text-xl mt-4">
                   {nextLabel}
@@ -98,10 +95,7 @@ export function PlaybackScreen({ list, onExit }: Props) {
             </>
           ) : (
             <>
-              <CountdownTimer
-                remainingSecs={status.remainingSecs}
-                playDuration={status.playDuration}
-              />
+              <CountdownTimer remainingSecs={status.remainingSecs} />
               {track && (
                 <div
                   className="text-white font-semibold mt-4"
