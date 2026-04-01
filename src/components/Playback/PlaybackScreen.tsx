@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { TrainingList } from '../../types'
 import { usePlayback } from '../../hooks/usePlayback'
 import { CountdownTimer } from './CountdownTimer'
+import { KeepAwake } from '@capacitor-community/keep-awake'
 
 interface Props {
   list: TrainingList
@@ -11,6 +12,11 @@ interface Props {
 export function PlaybackScreen({ list, onExit }: Props) {
   const { status, start, stop, pause, resume, skipForward, skipBack } = usePlayback()
   const startedRef = useRef(false)
+
+  useEffect(() => {
+    KeepAwake.keepAwake()
+    return () => { KeepAwake.allowSleep() }
+  }, [])
 
   useEffect(() => {
     if (!startedRef.current) {
