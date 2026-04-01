@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Screen, TrainingList } from './types'
 import { useTrainingStore } from './hooks/useTrainingStore'
 import { MainScreen } from './components/MainScreen'
-import { AboutScreen } from './components/AboutScreen'
+import { InfoScreen } from './components/InfoScreen'
 import { TrainingListEditor } from './components/Editor/TrainingListEditor'
 import { PlaybackScreen } from './components/Playback/PlaybackScreen'
 
@@ -50,8 +50,8 @@ export default function App() {
     setScreen({ type: 'main' })
   }
 
-  if (screen.type === 'about') {
-    return <AboutScreen onBack={() => setScreen({ type: 'main' })} />
+  if (screen.type === 'info') {
+    return <InfoScreen section={screen.section} onBack={() => setScreen({ type: 'main' })} />
   }
 
   if (screen.type === 'editor' && editTarget) {
@@ -85,7 +85,7 @@ export default function App() {
       onEdit={openEdit}
       onPlay={(id) => setScreen({ type: 'playback', listId: id })}
       onDelete={remove}
-      onAbout={() => setScreen({ type: 'about' })}
+      onInfoSelect={(section) => setScreen({ type: 'info', section })}
     />
   )
 }

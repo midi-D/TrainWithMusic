@@ -1,4 +1,5 @@
-import type { TrainingList } from '../types'
+import { useState } from 'react'
+import type { TrainingList, InfoSection } from '../types'
 
 interface Props {
   lists: TrainingList[]
@@ -7,7 +8,7 @@ interface Props {
   onEdit: (id: string) => void
   onPlay: (id: string) => void
   onDelete: (id: string) => void
-  onAbout: () => void
+  onInfoSelect: (section: InfoSection) => void
 }
 
 function formatDate(iso: string): string {
@@ -20,21 +21,59 @@ function formatDate(iso: string): string {
   }
 }
 
-export function MainScreen({ lists, loading, onNew, onEdit, onPlay, onDelete, onAbout }: Props) {
+const MENU_ITEMS: { section: InfoSection; label: string }[] = [
+  { section: 'user-guide',         label: 'User Guide' },
+  { section: 'known-limitations',  label: 'Known Limitations' },
+  { section: 'licensing',          label: 'Licensing' },
+]
+
+export function MainScreen({ lists, loading, onNew, onEdit, onPlay, onDelete, onInfoSelect }: Props) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  function handleMenuSelect(section: InfoSection) {
+    setMenuOpen(false)
+    onInfoSelect(section)
+  }
+
   return (
     <div className="h-dvh flex flex-col bg-gray-950">
       {/* Header */}
       <div className="safe-top bg-gray-900 border-b border-gray-800 px-4 py-4 flex items-center justify-between">
-        <div>
+        {/* Title + dropdown */}
+        <div className="relative">
           <button
-            onClick={onAbout}
+            onClick={() => setMenuOpen((o) => !o)}
             className="text-left active:opacity-70 transition"
-            aria-label="About TrainWithMusic"
+            aria-label="Open menu"
+            aria-expanded={menuOpen}
           >
             <h1 className="text-white text-xl font-bold">TrainWithMusic</h1>
             <p className="text-gray-500 text-xs mt-0.5">Your training lists</p>
           </button>
+
+          {menuOpen && (
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setMenuOpen(false)}
+              />
+              {/* Dropdown */}
+              <div className="absolute left-0 top-full mt-2 z-20 bg-gray-800 border border-gray-700 rounded-xl shadow-xl overflow-hidden min-w-48">
+                {MENU_ITEMS.map(({ section, label }) => (
+                  <button
+                    key={section}
+                    onClick={() => handleMenuSelect(section)}
+                    className="w-full text-left px-4 py-3 text-gray-200 text-sm hover:bg-gray-700 active:bg-gray-600 transition border-b border-gray-700 last:border-0"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
+
         <button
           onClick={onNew}
           className="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white px-4 py-2 rounded-lg font-semibold text-sm transition"

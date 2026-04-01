@@ -16,8 +16,10 @@ export interface TrainingList {
   lastModified: string // ISO date string
 }
 
+export type InfoSection = 'user-guide' | 'known-limitations' | 'licensing'
+
 export type Screen =
   | { type: 'main' }
-  | { type: 'about' }
+  | { type: 'info'; section: InfoSection }
   | { type: 'editor'; listId: string | null }
   | { type: 'playback'; listId: string }
