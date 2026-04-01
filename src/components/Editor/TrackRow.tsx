@@ -19,6 +19,13 @@ export function TrackRow({ track, index, total, onChange, onDelete, onMoveUp, on
   // Local string state so the user can delete all digits without the field snapping back
   const [startStr, setStartStr] = useState(String(track.startOffset))
   const [durationStr, setDurationStr] = useState(String(track.playDuration))
+  const [trackLength, setTrackLength] = useState<number | null>(null)
+
+  const clampDuration = (start: number, dur: number, len: number | null): number => {
+    const base = Math.max(1, dur)
+    if (len === null) return base
+    return Math.max(1, Math.min(base, len - start))
+  }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -38,13 +45,17 @@ export function TrackRow({ track, index, total, onChange, onDelete, onMoveUp, on
   const handleStartBlur = () => {
     const val = Math.max(0, Number(startStr) || 0)
     setStartStr(String(val))
-    onChange({ ...track, startOffset: val })
+    const clampedDur = clampDuration(val, track.playDuration, trackLength)
+    if (clampedDur !== track.playDuration) setDurationStr(String(clampedDur))
+    onChange({ ...track, startOffset: val, playDuration: clampedDur })
   }
 
   // Called by the waveform slider — keeps text input in sync too
   const handleStartOffsetChange = (offset: number) => {
     setStartStr(String(offset))
-    onChange({ ...track, startOffset: offset })
+    const clampedDur = clampDuration(offset, track.playDuration, trackLength)
+    if (clampedDur !== track.playDuration) setDurationStr(String(clampedDur))
+    onChange({ ...track, startOffset: offset, playDuration: clampedDur })
   }
 
   const handleDurationChange = (raw: string) => {
@@ -54,9 +65,19 @@ export function TrackRow({ track, index, total, onChange, onDelete, onMoveUp, on
   }
 
   const handleDurationBlur = () => {
-    const val = Math.max(1, Number(durationStr) || 1)
+    const raw = Math.max(1, Number(durationStr) || 1)
+    const val = clampDuration(track.startOffset, raw, trackLength)
     setDurationStr(String(val))
     onChange({ ...track, playDuration: val })
+  }
+
+  const handleDurationKnown = (duration: number) => {
+    setTrackLength(duration)
+    const clamped = clampDuration(track.startOffset, track.playDuration, duration)
+    if (clamped !== track.playDuration) {
+      setDurationStr(String(clamped))
+      onChange({ ...track, playDuration: clamped })
+    }
   }
 
   return (
@@ -144,6 +165,7 @@ export function TrackRow({ track, index, total, onChange, onDelete, onMoveUp, on
           startOffset={track.startOffset}
           playDuration={track.playDuration}
           onStartOffsetChange={handleStartOffsetChange}
+          onDurationKnown={handleDurationKnown}
         />
       )}
     </div>

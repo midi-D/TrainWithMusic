@@ -7,6 +7,7 @@ interface Props {
   startOffset: number
   playDuration: number
   onStartOffsetChange: (offset: number) => void
+  onDurationKnown?: (duration: number) => void
 }
 
 const NUM_BARS = 200
@@ -17,7 +18,7 @@ function formatDur(secs: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffsetChange }: Props) {
+export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffsetChange, onDurationKnown }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const audioBufRef = useRef<AudioBuffer | null>(null)
   const previewSourceRef = useRef<AudioBufferSourceNode | null>(null)
@@ -49,6 +50,7 @@ export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffse
         audioBufRef.current = audioBuffer
         const duration = audioBuffer.duration
         setTotalDuration(duration)
+        onDurationKnown?.(duration)
 
         // Downsample channel 0 to NUM_BARS RMS values
         const channelData = audioBuffer.getChannelData(0)
