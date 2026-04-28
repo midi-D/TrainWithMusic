@@ -25,7 +25,7 @@ export function CountdownTimer({ remainingSecs, isRest = false }: Props) {
             <div
               key={step}
               className={`flex-1 rounded-full transition-colors duration-100 ${
-                inLastFive && step <= barCount ? 'bg-green-400' : 'bg-gray-800'
+                inLastFive && step <= barCount ? 'bg-green-400' : 'bg-gray-200 dark:bg-gray-800'
               }`}
               style={{ height: '0.65rem' }}
             />

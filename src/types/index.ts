@@ -16,6 +16,12 @@ export interface TrainingList {
   lastModified: string // ISO date string
 }
 
+export interface AppSettings {
+  defaultRestTimeSecs: number
+  defaultUseBeeps: boolean
+  theme: 'dark' | 'light'
+}
+
 export type InfoSection = 'user-guide' | 'known-limitations' | 'licensing'
 
 export type Screen =

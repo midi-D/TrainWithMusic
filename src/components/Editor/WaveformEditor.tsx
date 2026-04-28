@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { getAudioFile } from '../../utils/db'
 import { getAudioContext, resumeAudioContext } from '../../utils/audio'
+import { useTheme } from '../../hooks/useAppSettings'
 
 interface Props {
   fileId: string
@@ -22,6 +23,7 @@ export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffse
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const audioBufRef = useRef<AudioBuffer | null>(null)
   const previewSourceRef = useRef<AudioBufferSourceNode | null>(null)
+  const theme = useTheme()
 
   const [waveform, setWaveform] = useState<Float32Array | null>(null)
   const [totalDuration, setTotalDuration] = useState<number | null>(null)
@@ -77,7 +79,7 @@ export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffse
     return () => { cancelled = true }
   }, [fileId])
 
-  // Redraw canvas whenever waveform data or position/duration changes
+  // Redraw canvas whenever waveform data, position/duration, or theme changes
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas || !waveform || totalDuration === null) return
@@ -100,27 +102,26 @@ export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffse
     const startFrac = startOffset / totalDuration
     const endFrac = Math.min(1, (startOffset + playDuration) / totalDuration)
 
+    const inactiveColor = theme === 'dark' ? '#1f2937' : '#d1d5db'
+    const markerColor   = theme === 'dark' ? '#ffffff' : '#111827'
+
     for (let i = 0; i < NUM_BARS; i++) {
       const frac = i / NUM_BARS
       const barH = Math.max(2, waveform[i] * displayH * 0.88)
       const x = i * barW
       const y = (displayH - barH) / 2
 
-      if (frac >= startFrac && frac < endFrac) {
-        ctx.fillStyle = '#4ade80' // green-400
-      } else {
-        ctx.fillStyle = '#1f2937' // gray-800
-      }
+      ctx.fillStyle = (frac >= startFrac && frac < endFrac) ? '#4ade80' : inactiveColor
       ctx.fillRect(x, y, Math.max(1, barW - 0.8), barH)
     }
 
-    // White marker line at start position
+    // Marker line at start position
     const markerX = Math.round(startFrac * displayW)
-    ctx.fillStyle = '#ffffff'
+    ctx.fillStyle = markerColor
     ctx.fillRect(markerX - 1, 0, 2, displayH)
-  }, [waveform, totalDuration, startOffset, playDuration])
+  }, [waveform, totalDuration, startOffset, playDuration, theme])
 
-  // Preview: play 10 s centred around middle of track
+  // Preview: play selection
   const handlePreview = useCallback(async () => {
     // Stop existing preview
     if (previewSourceRef.current) {
@@ -167,7 +168,7 @@ export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffse
   return (
     <div className="flex flex-col gap-2 pt-1">
       {loading && (
-        <div className="h-16 flex items-center justify-center bg-gray-900 rounded text-gray-600 text-xs">
+        <div className="h-16 flex items-center justify-center bg-gray-50 dark:bg-gray-900 rounded text-gray-400 dark:text-gray-600 text-xs">
           Loading waveform…
         </div>
       )}
@@ -175,7 +176,7 @@ export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffse
       {waveform && totalDuration !== null && (
         <>
           {/* Waveform */}
-          <div className="relative w-full rounded overflow-hidden bg-gray-900" style={{ height: '4rem' }}>
+          <div className="relative w-full rounded overflow-hidden bg-gray-50 dark:bg-gray-900" style={{ height: '4rem' }}>
             <canvas ref={canvasRef} className="w-full h-full block" />
           </div>
 
@@ -192,7 +193,7 @@ export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffse
 
           {/* Info + preview */}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-gray-500 shrink-0">
+            <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
               Start: {clampedStart}s &nbsp;/&nbsp; Total: {formatDur(totalDuration)}
             </span>
             <button
@@ -200,7 +201,7 @@ export function WaveformEditor({ fileId, startOffset, playDuration, onStartOffse
               className={`shrink-0 px-3 py-1 rounded text-xs font-medium transition ${
                 isPreviewing
                   ? 'bg-yellow-800 text-yellow-300'
-                  : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                  : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'
               }`}
             >
               {isPreviewing ? '■ Stop' : '▶ Preview selection'}

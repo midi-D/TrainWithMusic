@@ -58,20 +58,20 @@ export function PlaybackScreen({ list, onExit }: Props) {
     : 'Next: Almost done!'
 
   return (
-    <div className="fixed inset-0 bg-gray-950 flex flex-col select-none">
+    <div className="fixed inset-0 bg-white dark:bg-gray-950 flex flex-col select-none">
       {/* Top bar */}
       <div
         className="flex items-center justify-between px-4 pt-4"
         style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
       >
-        <div className="text-gray-500 text-sm font-medium w-24">
+        <div className="text-gray-400 dark:text-gray-500 text-sm font-medium w-24">
           {!isCompleted && !isPreparing && (
             <>Track {status.trackIndex + 1} / {status.totalTracks}</>
           )}
         </div>
         <button
           onClick={handleStop}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 text-gray-300 text-xl font-bold hover:bg-gray-700 active:scale-95 transition"
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300 text-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 transition"
           aria-label="Stop playback"
         >
           ✕
@@ -88,23 +88,23 @@ export function PlaybackScreen({ list, onExit }: Props) {
             >
               SUCCESS!
             </div>
-            <div className="text-gray-400 text-xl">Great workout!</div>
+            <div className="text-gray-500 dark:text-gray-400 text-xl">Great workout!</div>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4">
             {showRestUI ? (
               <>
-                <div className="text-gray-400 text-2xl font-semibold uppercase tracking-widest mb-2">
+                <div className="text-gray-500 dark:text-gray-400 text-2xl font-semibold uppercase tracking-widest mb-2">
                   {effectiveRestState === 'preparing' ? 'Get Ready!' : 'Rest'}
                 </div>
                 <CountdownTimer remainingSecs={status.remainingSecs} isRest />
                 {effectiveRestState === 'resting' && (
-                  <div className="text-gray-400 text-xl mt-4">
+                  <div className="text-gray-500 dark:text-gray-400 text-xl mt-4">
                     {nextLabel}
                   </div>
                 )}
                 {effectiveRestState === 'preparing' && track && (
-                  <div className="text-gray-500 text-xl mt-4">
+                  <div className="text-gray-400 dark:text-gray-500 text-xl mt-4">
                     {track.exerciseTitle || track.fileName}
                   </div>
                 )}
@@ -114,7 +114,7 @@ export function PlaybackScreen({ list, onExit }: Props) {
                 <CountdownTimer remainingSecs={status.remainingSecs} />
                 {track && (
                   <div
-                    className="text-white font-semibold mt-4"
+                    className="text-gray-900 dark:text-white font-semibold mt-4"
                     style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)' }}
                   >
                     {track.exerciseTitle || track.fileName}
@@ -135,7 +135,7 @@ export function PlaybackScreen({ list, onExit }: Props) {
           <button
             onClick={skipBack}
             disabled={!isActive && !isPaused}
-            className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-800 text-2xl text-gray-200 hover:bg-gray-700 active:scale-95 disabled:opacity-30 transition"
+            className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-2xl text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 disabled:opacity-30 transition"
             aria-label="Skip back"
           >
             ⏮
@@ -143,7 +143,7 @@ export function PlaybackScreen({ list, onExit }: Props) {
           <button
             onClick={isActive ? pause : resume}
             disabled={!isActive && !isPaused}
-            className="w-18 h-18 flex items-center justify-center rounded-full bg-gray-700 text-3xl text-white hover:bg-gray-600 active:scale-95 disabled:opacity-30 transition"
+            className="w-18 h-18 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-3xl text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 active:scale-95 disabled:opacity-30 transition"
             style={{ width: '4.5rem', height: '4.5rem' }}
             aria-label={isActive ? 'Pause' : 'Resume'}
           >
@@ -152,7 +152,7 @@ export function PlaybackScreen({ list, onExit }: Props) {
           <button
             onClick={skipForward}
             disabled={!isActive && !isPaused}
-            className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-800 text-2xl text-gray-200 hover:bg-gray-700 active:scale-95 disabled:opacity-30 transition"
+            className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-2xl text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 disabled:opacity-30 transition"
             aria-label="Skip forward"
           >
             ⏭

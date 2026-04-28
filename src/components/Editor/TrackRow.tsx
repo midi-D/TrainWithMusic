@@ -81,15 +81,15 @@ export function TrackRow({ track, index, total, onChange, onDelete, onMoveUp, on
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg p-3 flex flex-col gap-2">
+    <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 flex flex-col gap-2">
       {/* Row header */}
       <div className="flex items-center gap-2">
-        <span className="text-gray-500 text-sm w-5 shrink-0">{index + 1}.</span>
+        <span className="text-gray-400 dark:text-gray-500 text-sm w-5 shrink-0">{index + 1}.</span>
 
         {/* File picker */}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="flex-1 min-w-0 text-left text-sm bg-gray-700 hover:bg-gray-600 active:scale-[0.98] rounded px-3 py-1.5 text-gray-200 truncate transition"
+          className="flex-1 min-w-0 text-left text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 active:scale-[0.98] rounded px-3 py-1.5 text-gray-700 dark:text-gray-200 truncate transition"
         >
           {track.fileName || 'Select audio file…'}
         </button>
@@ -105,20 +105,20 @@ export function TrackRow({ track, index, total, onChange, onDelete, onMoveUp, on
         <button
           onClick={onMoveUp}
           disabled={index === 0}
-          className="text-gray-400 hover:text-white disabled:opacity-20 px-1 text-lg leading-none"
+          className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-20 px-1 text-lg leading-none"
           title="Move up"
         >↑</button>
         <button
           onClick={onMoveDown}
           disabled={index === total - 1}
-          className="text-gray-400 hover:text-white disabled:opacity-20 px-1 text-lg leading-none"
+          className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-20 px-1 text-lg leading-none"
           title="Move down"
         >↓</button>
 
         {/* Delete */}
         <button
           onClick={onDelete}
-          className="text-gray-500 hover:text-red-400 px-1 text-lg leading-none"
+          className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 px-1 text-lg leading-none"
           title="Remove track"
         >✕</button>
       </div>
@@ -129,31 +129,31 @@ export function TrackRow({ track, index, total, onChange, onDelete, onMoveUp, on
         placeholder="Exercise title (optional)"
         value={track.exerciseTitle}
         onChange={(e) => onChange({ ...track, exerciseTitle: e.target.value })}
-        className="w-full bg-gray-700 rounded px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="w-full bg-gray-200 dark:bg-gray-700 rounded px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
 
       {/* Timing */}
       <div className="flex gap-3">
         <label className="flex-1 flex flex-col gap-0.5">
-          <span className="text-xs text-gray-500">Start (sec)</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">Start (sec)</span>
           <input
             type="text"
             inputMode="numeric"
             value={startStr}
             onChange={(e) => handleStartChange(e.target.value)}
             onBlur={handleStartBlur}
-            className="w-full bg-gray-700 rounded px-3 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full bg-gray-200 dark:bg-gray-700 rounded px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </label>
         <label className="flex-1 flex flex-col gap-0.5">
-          <span className="text-xs text-gray-500">Play for (sec)</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">Play for (sec)</span>
           <input
             type="text"
             inputMode="numeric"
             value={durationStr}
             onChange={(e) => handleDurationChange(e.target.value)}
             onBlur={handleDurationBlur}
-            className="w-full bg-gray-700 rounded px-3 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full bg-gray-200 dark:bg-gray-700 rounded px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </label>
       </div>
