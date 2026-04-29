@@ -24,6 +24,8 @@ export interface AppSettings {
 
 export type InfoSection = 'user-guide' | 'known-limitations' | 'licensing'
 
+export type SpotifyStatus = 'disconnected' | 'connecting' | 'connected' | 'error'
+
 export type Screen =
   | { type: 'main' }
   | { type: 'info'; section: InfoSection }

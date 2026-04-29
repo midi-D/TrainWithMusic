@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { AppSettings, InfoSection } from '../types'
+import { useSpotifyContext } from '../contexts/SpotifyContext'
 
 interface Props {
   settings: AppSettings
@@ -14,12 +15,7 @@ const INFO_ITEMS: { section: InfoSection; label: string }[] = [
   { section: 'licensing',         label: 'About' },
 ]
 
-const MUSIC_SERVICES = [
-  'Spotify',
-  'Apple Music',
-  'Amazon Music',
-  'YouTube Music',
-]
+const OTHER_SERVICES = ['Apple Music', 'Amazon Music', 'YouTube Music']
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
@@ -43,6 +39,64 @@ function Row({ children, onClick, chevron }: { children: React.ReactNode; onClic
         <span className="text-gray-400 dark:text-gray-500 text-sm ml-2">›</span>
       )}
     </div>
+  )
+}
+
+function SpotifyRow() {
+  const { status, displayName, errorMessage, connect, disconnect } = useSpotifyContext()
+
+  const badge = (text: string, color: string) => (
+    <span className={`text-xs rounded-full px-2 py-0.5 ${color}`}>{text}</span>
+  )
+
+  if (status === 'connected') {
+    return (
+      <Row>
+        <span className="text-gray-900 dark:text-white text-sm">Spotify</span>
+        <div className="flex items-center gap-2">
+          {badge(`✓ ${displayName ?? 'Connected'}`, 'text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/40')}
+          <button
+            onClick={disconnect}
+            className="text-xs text-red-600 dark:text-red-400 underline"
+          >
+            Disconnect
+          </button>
+        </div>
+      </Row>
+    )
+  }
+
+  if (status === 'error') {
+    return (
+      <Row>
+        <span className="text-gray-900 dark:text-white text-sm">Spotify</span>
+        <div className="flex items-center gap-2">
+          {badge(errorMessage ?? 'Error', 'text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/40')}
+          <button
+            onClick={connect}
+            className="text-xs text-blue-600 dark:text-blue-400 underline"
+          >
+            Retry
+          </button>
+        </div>
+      </Row>
+    )
+  }
+
+  if (status === 'connecting') {
+    return (
+      <Row>
+        <span className="text-gray-900 dark:text-white text-sm">Spotify</span>
+        {badge('Connecting…', 'text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700')}
+      </Row>
+    )
+  }
+
+  return (
+    <Row onClick={connect} chevron>
+      <span className="text-gray-900 dark:text-white text-sm">Spotify</span>
+      {badge('Connect', 'text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40')}
+    </Row>
   )
 }
 
@@ -127,7 +181,8 @@ export function SettingsPanel({ settings, onSettingsChange, onInfoSelect, onClos
         {/* Music Services */}
         <SectionHeading>Music Services</SectionHeading>
         <div className="rounded-xl overflow-hidden mx-4">
-          {MUSIC_SERVICES.map((name) => (
+          <SpotifyRow />
+          {OTHER_SERVICES.map((name) => (
             <Row key={name}>
               <span className="text-gray-900 dark:text-white text-sm">{name}</span>
               <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-200 dark:bg-gray-700 rounded-full px-2 py-0.5">

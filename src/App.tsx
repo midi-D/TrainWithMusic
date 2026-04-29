@@ -6,6 +6,7 @@ import { MainScreen } from './components/MainScreen'
 import { InfoScreen } from './components/InfoScreen'
 import { TrainingListEditor } from './components/Editor/TrainingListEditor'
 import { PlaybackScreen } from './components/Playback/PlaybackScreen'
+import { SpotifyProvider } from './contexts/SpotifyProvider'
 
 function newList(settings: AppSettings): TrainingList {
   return {
@@ -18,7 +19,7 @@ function newList(settings: AppSettings): TrainingList {
   }
 }
 
-export default function App() {
+function AppContent() {
   const { lists, loading, save, remove, getById } = useTrainingStore()
   const { settings, updateSettings } = useAppSettings()
   const [screen, setScreen] = useState<Screen>({ type: 'main' })
@@ -101,5 +102,13 @@ export default function App() {
         onSettingsChange={updateSettings}
       />
     </ThemeContext.Provider>
+  )
+}
+
+export default function App() {
+  return (
+    <SpotifyProvider>
+      <AppContent />
+    </SpotifyProvider>
   )
 }
